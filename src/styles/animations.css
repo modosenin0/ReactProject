@@ -1,0 +1,173 @@
+/* Fade-in animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+/* Animation classes */
+.fade-in {
+  animation: fadeIn 0.6s ease-out;
+}
+
+.slide-in-up {
+  animation: slideInUp 0.4s ease-out;
+}
+
+.repo-card {
+  transition: all 0.3s ease;
+}
+
+.repo-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Staggered animation for repository cards */
+.repo-card:nth-child(1) { animation-delay: 0.1s; }
+.repo-card:nth-child(2) { animation-delay: 0.2s; }
+.repo-card:nth-child(3) { animation-delay: 0.3s; }
+.repo-card:nth-child(4) { animation-delay: 0.4s; }
+.repo-card:nth-child(5) { animation-delay: 0.5s; }
+.repo-card:nth-child(6) { animation-delay: 0.6s; }
+.repo-card:nth-child(7) { animation-delay: 0.7s; }
+.repo-card:nth-child(8) { animation-delay: 0.8s; }
+.repo-card:nth-child(9) { animation-delay: 0.9s; }
+.repo-card:nth-child(10) { animation-delay: 1s; }
+
+/* Loading animation improvements */
+.loading-container {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.loading-spinner {
+  animation: pulse 2s infinite;
+}
+
+/* Button hover effects */
+.btn {
+  transition: all 0.2s ease;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+}
+
+/* Enhanced form control focus effects */
+.form-control:focus,
+.form-select:focus {
+  transform: translateY(-1px);
+  box-shadow: 0 0.5rem 1rem rgba(0, 123, 255, 0.15) !important;
+}
+
+/* Repository card entrance animations with improved stagger */
+.repo-card {
+  opacity: 0;
+  transform: translateY(30px);
+  animation: slideInUp 0.6s ease-out forwards;
+}
+
+/* Enhanced hover effects for cards */
+.repo-card:hover {
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Badge hover effects */
+.badge {
+  transition: all 0.2s ease;
+}
+
+.badge:hover {
+  transform: scale(1.05);
+}
+
+/* Search bar animations */
+.search-container {
+  transition: all 0.3s ease;
+}
+
+.search-container:focus-within {
+  transform: scale(1.02);
+}
+
+/* Dark mode specific improvements */
+[data-bs-theme="dark"] .repo-card:hover {
+  box-shadow: 0 1rem 2rem rgba(255, 255, 255, 0.1) !important;
+}
+
+[data-bs-theme="dark"] .form-control:focus,
+[data-bs-theme="dark"] .form-select:focus {
+  box-shadow: 0 0.5rem 1rem rgba(13, 110, 253, 0.25) !important;
+}
+
+/* Smooth theme transition - apply to all elements */
+*,
+*::before,
+*::after {
+  transition: background-color 0.3s ease, 
+              border-color 0.3s ease, 
+              color 0.3s ease, 
+              box-shadow 0.3s ease,
+              opacity 0.3s ease;
+}
+
+/* Theme transition for specific Bootstrap components */
+.card,
+.btn,
+.form-control,
+.form-select,
+.badge,
+.alert {
+  transition: all 0.3s ease;
+}
+
+/* Controls container animation */
+.controls-container {
+  animation: slideInUp 0.5s ease-out;
+}
+
+/* Results container animation */
+.results-container {
+  animation: fadeIn 0.8s ease-out;
+}
+
+/* No results animation */
+.no-results {
+  animation: fadeIn 1s ease-out;
+}
+
+/* Header animation */
+.header-title {
+  animation: slideInUp 0.6s ease-out;
+}
+
+/* Pagination animation */
+.pagination-container {
+  animation: slideInUp 0.7s ease-out;
+}

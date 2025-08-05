@@ -4,6 +4,7 @@ import Pagination from "../components/Pagination";
 import SearchBar from "../components/SearchBar";
 import SortOptions from "../components/SortOptions";
 import Filters from "../components/Filters";
+import DarkModeToggle from "../components/DarkModeToggle";
 
 interface Repository {
     id: number;
@@ -76,18 +77,24 @@ export default function SearchPage(){
     }, [query, sort, order, language, starsRange]);
 
     return (
-        <div className="min-vh-100 bg-light py-4">
+        <div className="min-vh-100 py-4">
             <div className="container-fluid">
                 <div className="row justify-content-center">
                     <div className="col-xl-10 col-lg-11 col-12">
-                        <h1 className="display-5 fw-bold text-center mb-4">
-                            Popular Repositories
-                        </h1>
+                        {/* Header with Dark Mode Toggle */}
+                        <div className="d-flex justify-content-between align-items-center mb-4 header-title">
+                            <h1 className="display-5 fw-bold text-center flex-grow-1 mb-0">
+                                Popular Repositories
+                            </h1>
+                            <DarkModeToggle />
+                        </div>
                         
-                        <SearchBar onSearch={setQuery} />
+                        <div className="search-container">
+                            <SearchBar onSearch={setQuery} />
+                        </div>
 
                         {/* Controls Group */}
-                        <div className="card shadow-sm mb-4">
+                        <div className="card shadow-sm mb-4 controls-container">
                             <div className="card-body">
                                 <h2 className="h5 fw-semibold mb-3">Filter & Sort Options</h2>
                                 
@@ -133,9 +140,9 @@ export default function SearchPage(){
                         )}
                         
                         {loading ? (
-                            <div className="d-flex justify-content-center align-items-center py-5">
+                            <div className="d-flex justify-content-center align-items-center py-5 loading-container">
                                 <div className="text-center">
-                                    <div className="spinner-border text-primary mb-3" role="status">
+                                    <div className="spinner-border text-primary mb-3 loading-spinner" role="status">
                                         <span className="visually-hidden">Loading...</span>
                                     </div>
                                     <p className="h6 text-muted">Loading repositories...</p>
@@ -143,11 +150,11 @@ export default function SearchPage(){
                                 </div>
                             </div>
                         ) : repos.length > 0 ? (
-                            <div>
+                            <div className="results-container">
                                 <div className="row g-4">
-                                    {repos.map((repo) => (
+                                    {repos.map((repo, index) => (
                                         <div key={repo.id} className="col-12">
-                                            <div className="card h-100 shadow-sm">
+                                            <div className="card h-100 shadow-sm repo-card fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
                                                 <div className="card-body">
                                                     <div className="d-flex flex-column flex-md-row justify-content-between align-items-start mb-3">
                                                         <div className="flex-grow-1 mb-2 mb-md-0">
@@ -223,10 +230,12 @@ export default function SearchPage(){
                                         </div>
                                     ))}
                                 </div>
-                                <Pagination page={page} setPage={setPage} hasNextPage={hasNextPage} />
+                                <div className="pagination-container">
+                                    <Pagination page={page} setPage={setPage} hasNextPage={hasNextPage} />
+                                </div>
                             </div>
                         ) : (
-                            <div className="text-center py-5">
+                            <div className="text-center py-5 no-results">
                                 <div className="text-muted">
                                     <div className="display-1 mb-3">📁</div>
                                     <h4 className="fw-medium">No repositories found</h4>
