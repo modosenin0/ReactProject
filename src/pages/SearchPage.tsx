@@ -1,5 +1,5 @@
 import React from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import Pagination from "../components/Pagination";
 import SearchBar from "../components/SearchBar";
 import SortOptions from "../components/SortOptions";
@@ -7,6 +7,7 @@ import Filters from "../components/Filters";
 import StarsFilter from "../components/StarsFilter";
 import DarkModeToggle from "../components/DarkModeToggle";
 import { useSearchParams } from "react-router-dom";
+import { useSavedSearches } from "../contexts/SavedSearchesContext";
 
 interface Repository {
     id: number;
@@ -36,8 +37,98 @@ export default function SearchPage(){
     const [minStars, setMinStars] = useState('');
     const [maxStars, setMaxStars] = useState('');
     const [searchParams, setSearchParams] = useSearchParams();
+    const [showSaveModal, setShowSaveModal] = useState(false);
+    const [searchName, setSearchName] = useState('');
+    
+    // Saved searches context
+    const { saveSearch, addToFavorites, removeFromFavorites, isFavorite } = useSavedSearches();
+    
+    // Refs for debouncing and request cancellation
+    const abortControllerRef = useRef<AbortController | null>(null);
+    const debounceTimeoutRef = useRef<number | null>(null);
 
-    // Initialize state from URL params or localStorage on mount
+    // Cleanup function to cancel ongoing requests and timeouts
+    const cancelOngoingRequests = useCallback(() => {
+        // Cancel the current fetch request if it exists
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+            abortControllerRef.current = null;
+        }
+        
+        // Clear the debounce timeout if it exists
+        if (debounceTimeoutRef.current) {
+            clearTimeout(debounceTimeoutRef.current);
+            debounceTimeoutRef.current = null;
+        }
+    }, []);
+
+    // Debounced fetch function
+    const debouncedFetch = useCallback((
+        queryString: string,
+        sort: string,
+        order: string,
+        page: number,
+        delay: number = 300
+    ) => {
+        // Cancel any ongoing requests and timeouts
+        cancelOngoingRequests();
+        
+        // Set up new debounce timeout
+        debounceTimeoutRef.current = window.setTimeout(() => {
+            // Create new AbortController for this request
+            const controller = new AbortController();
+            abortControllerRef.current = controller;
+            
+            setLoading(true);
+            setError(null);
+            
+            fetch(`https://api.github.com/search/repositories?q=${queryString}&sort=${sort}&order=${order}&per_page=10&page=${page}`, {
+                signal: controller.signal
+            })
+            .then((res) => {
+                if (!res.ok) {
+                    throw new Error(`HTTP error! status: ${res.status}`);
+                }
+                return res.json();
+            })
+            .then((data) => {
+                // Only update state if this request wasn't aborted
+                if (!controller.signal.aborted) {
+                    // Set total count from API response
+                    setTotalCount(data.total_count || 0);
+                    
+                    // GitHub API limits results to 1000 items max (100 pages with 10 per page)
+                    const maxResults = Math.min(data.total_count || 0, 1000);
+                    const maxPages = Math.ceil(maxResults / 10);
+                    const calculatedHasNextPage = page < maxPages && (data.items?.length || 0) === 10;
+                    
+                    setHasNextPage(calculatedHasNextPage);
+                    
+                    if (page > 1) {
+                        setRepos((prevRepos) => [...prevRepos, ...(data.items || [])]);
+                    } else {
+                        setRepos(data.items || []);
+                    }
+                    setLoading(false);
+                }
+            })
+            .catch((error) => {
+                // Only handle error if this request wasn't aborted
+                if (!controller.signal.aborted) {
+                    console.log(error.message);
+                    setError(error.message);
+                    setLoading(false);
+                }
+            })
+            .finally(() => {
+                // Clean up the abort controller reference
+                if (abortControllerRef.current === controller) {
+                    abortControllerRef.current = null;
+                }
+            });
+        }, delay);
+    }, [cancelOngoingRequests]);
+
     useEffect(() => {
         const urlQuery = searchParams.get('q');
         const urlLang = searchParams.get('lang');
@@ -161,37 +252,118 @@ export default function SearchPage(){
             queryString += `+${starsQuery}`;
         }
         
-        setLoading(true);
-        setError(null); 
-        fetch(`https://api.github.com/search/repositories?q=${queryString}&sort=${sort}&order=${order}&per_page=10&page=${page}`)
-        .then((res) => res.json())
-        .then((data) => {            
-            // Set total count from API response
-            setTotalCount(data.total_count || 0);
+        // Use debounced fetch for search queries (but not for pagination)
+        // For pagination, we want immediate results
+        if (page === 1) {
+            // This is a new search, use debouncing
+            debouncedFetch(queryString, sort, order, page, 300);
+        } else {
+            // This is pagination, fetch immediately without debouncing
+            cancelOngoingRequests();
             
-            // GitHub API limits results to 1000 items max (100 pages with 10 per page)
-            const maxResults = Math.min(data.total_count || 0, 1000);
-            const maxPages = Math.ceil(maxResults / 10);
-            const calculatedHasNextPage = page < maxPages && (data.items?.length || 0) === 10;
+            const controller = new AbortController();
+            abortControllerRef.current = controller;
             
-            setHasNextPage(calculatedHasNextPage);
+            setLoading(true);
+            setError(null);
             
-            if (page > 1) {
-                setRepos((prevRepos) => [...prevRepos, ...(data.items || [])]);
-            } else {
-                setRepos(data.items || []);
-            }
-            setLoading(false);
-        }).catch((error) => {
-            console.log(error.message);
-            setError(error.message);
-            setLoading(false);
-        })
-    }, [query, page, sort, order, language, minStars, maxStars]);
+            fetch(`https://api.github.com/search/repositories?q=${queryString}&sort=${sort}&order=${order}&per_page=10&page=${page}`, {
+                signal: controller.signal
+            })
+            .then((res) => {
+                if (!res.ok) {
+                    throw new Error(`HTTP error! status: ${res.status}`);
+                }
+                return res.json();
+            })
+            .then((data) => {
+                if (!controller.signal.aborted) {
+                    setTotalCount(data.total_count || 0);
+                    
+                    const maxResults = Math.min(data.total_count || 0, 1000);
+                    const maxPages = Math.ceil(maxResults / 10);
+                    const calculatedHasNextPage = page < maxPages && (data.items?.length || 0) === 10;
+                    
+                    setHasNextPage(calculatedHasNextPage);
+                    setRepos((prevRepos) => [...prevRepos, ...(data.items || [])]);
+                    setLoading(false);
+                }
+            })
+            .catch((error) => {
+                if (!controller.signal.aborted) {
+                    console.log(error.message);
+                    setError(error.message);
+                    setLoading(false);
+                }
+            })
+            .finally(() => {
+                if (abortControllerRef.current === controller) {
+                    abortControllerRef.current = null;
+                }
+            });
+        }
+    }, [query, page, sort, order, language, minStars, maxStars, debouncedFetch, cancelOngoingRequests]);
 
     useEffect(() => {
         setPage(1);
     }, [query, sort, order, language, minStars, maxStars]);
+
+    // Cleanup effect to cancel ongoing requests when component unmounts
+    useEffect(() => {
+        return () => {
+            cancelOngoingRequests();
+        };
+    }, [cancelOngoingRequests]);
+
+    // Listen for apply saved search events
+    useEffect(() => {
+        const handleApplySavedSearch = (event: any) => {
+            const search = event.detail;
+            setQuery(search.query);
+            setLanguage(search.language);
+            setSort(search.sort);
+            setOrder(search.order);
+            setMinStars(search.minStars);
+            setMaxStars(search.maxStars);
+            setPage(1);
+        };
+
+        window.addEventListener('applySavedSearch', handleApplySavedSearch);
+        return () => {
+            window.removeEventListener('applySavedSearch', handleApplySavedSearch);
+        };
+    }, []);
+
+    // Save search functionality
+    const handleSaveSearch = () => {
+        if (!searchName.trim()) {
+            alert('Please enter a name for this search');
+            return;
+        }
+
+        saveSearch({
+            name: searchName,
+            query,
+            language,
+            minStars,
+            maxStars,
+            sort,
+            order,
+        });
+
+        setSearchName('');
+        setShowSaveModal(false);
+        alert('Search saved successfully!');
+    };
+
+    // Toggle favorite for a repository
+    const handleToggleFavorite = (repo: Repository) => {
+        if (isFavorite(repo.id)) {
+            removeFromFavorites(repo.id);
+        } else {
+            addToFavorites(repo);
+        }
+    };
 
     return (
         <div className="min-vh-100 py-4">
@@ -213,7 +385,16 @@ export default function SearchPage(){
                         {/* Controls Group */}
                         <div className="card shadow-sm mb-4 controls-container">
                             <div className="card-body">
-                                <h2 className="h5 fw-semibold mb-3">Filter & Sort Options</h2>
+                                <div className="d-flex justify-content-between align-items-center mb-3">
+                                    <h2 className="h5 fw-semibold mb-0">Filter & Sort Options</h2>
+                                    <button 
+                                        className="btn btn-outline-primary btn-sm"
+                                        onClick={() => setShowSaveModal(true)}
+                                        title="Save current search configuration"
+                                    >
+                                        💾 Save Search
+                                    </button>
+                                </div>
                                 
                                 <div className="row">
                                     <SortOptions sort={sort} setSort={setSort} order={order} setOrder={setOrder} />
@@ -274,20 +455,31 @@ export default function SearchPage(){
                                                             <p className="text-muted small mb-0">{repo.full_name}</p>
                                                         </div>
                                                         
-                                                        <div className="d-flex flex-wrap gap-2">
-                                                            <span className="badge bg-warning text-dark">
-                                                                ⭐ {repo.stargazers_count.toLocaleString()}
-                                                            </span>
-                                                            
-                                                            <span className="badge bg-info text-dark">
-                                                                🍴 {repo.forks_count.toLocaleString()}
-                                                            </span>
-                                                            
-                                                            {repo.language && (
-                                                                <span className="badge bg-success">
-                                                                    🖥️ {repo.language}
+                                                        <div className="d-flex align-items-center gap-2">
+                                                            <div className="d-flex flex-wrap gap-2">
+                                                                <span className="badge bg-warning text-dark">
+                                                                    ⭐ {repo.stargazers_count.toLocaleString()}
                                                                 </span>
-                                                            )}
+                                                                
+                                                                <span className="badge bg-info text-dark">
+                                                                    🍴 {repo.forks_count.toLocaleString()}
+                                                                </span>
+                                                                
+                                                                {repo.language && (
+                                                                    <span className="badge bg-success">
+                                                                        🖥️ {repo.language}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            
+                                                            <button
+                                                                type="button"
+                                                                className={`btn btn-sm ${isFavorite(repo.id) ? 'btn-warning' : 'btn-outline-warning'}`}
+                                                                onClick={() => handleToggleFavorite(repo)}
+                                                                title={isFavorite(repo.id) ? 'Remove from favorites' : 'Add to favorites'}
+                                                            >
+                                                                ⭐
+                                                            </button>
                                                         </div>
                                                     </div>
                                                     
@@ -334,7 +526,12 @@ export default function SearchPage(){
                                     ))}
                                 </div>
                                 <div className="pagination-container">
-                                    <Pagination page={page} setPage={setPage} hasNextPage={hasNextPage} />
+                                    <Pagination 
+                                        page={page} 
+                                        setPage={setPage} 
+                                        hasNextPage={hasNextPage} 
+                                        totalCount={totalCount}
+                                    />
                                 </div>
                             </div>
                         ) : (
@@ -349,6 +546,75 @@ export default function SearchPage(){
                     </div>
                 </div>
             </div>
+            
+            {/* Save Search Modal */}
+            <div className={`modal fade ${showSaveModal ? 'show' : ''}`} 
+                 style={{ display: showSaveModal ? 'block' : 'none' }}
+                 tabIndex={-1} 
+                 aria-hidden="true">
+                <div className="modal-dialog">
+                    <div className="modal-content">
+                        <div className="modal-header">
+                            <h5 className="modal-title">💾 Save Search</h5>
+                            <button 
+                                type="button" 
+                                className="btn-close" 
+                                onClick={() => setShowSaveModal(false)}
+                                aria-label="Close"
+                            ></button>
+                        </div>
+                        <div className="modal-body">
+                            <div className="mb-3">
+                                <label htmlFor="search-name" className="form-label">Search Name</label>
+                                <input
+                                    type="text"
+                                    className="form-control"
+                                    id="search-name"
+                                    value={searchName}
+                                    onChange={(e) => setSearchName(e.target.value)}
+                                    placeholder="Enter a name for this search..."
+                                />
+                            </div>
+                            
+                            <div className="alert alert-info">
+                                <h6 className="alert-heading">Current Search Configuration:</h6>
+                                <ul className="mb-0 small">
+                                    <li><strong>Query:</strong> "{query}"</li>
+                                    {language && <li><strong>Language:</strong> {language}</li>}
+                                    {minStars && <li><strong>Min Stars:</strong> {minStars}</li>}
+                                    {maxStars && <li><strong>Max Stars:</strong> {maxStars}</li>}
+                                    <li><strong>Sort:</strong> {sort} ({order})</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div className="modal-footer">
+                            <button 
+                                type="button" 
+                                className="btn btn-secondary"
+                                onClick={() => setShowSaveModal(false)}
+                            >
+                                Cancel
+                            </button>
+                            <button 
+                                type="button" 
+                                className="btn btn-primary"
+                                onClick={handleSaveSearch}
+                                disabled={!searchName.trim()}
+                            >
+                                Save Search
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            {/* Modal backdrop */}
+            {showSaveModal && (
+                <div 
+                    className="modal-backdrop fade show"
+                    onClick={() => setShowSaveModal(false)}
+                ></div>
+            )}
         </div>
     )
 }
