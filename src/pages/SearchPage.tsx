@@ -4,7 +4,9 @@ import Pagination from "../components/Pagination";
 import SearchBar from "../components/SearchBar";
 import SortOptions from "../components/SortOptions";
 import Filters from "../components/Filters";
+import StarsFilter from "../components/StarsFilter";
 import DarkModeToggle from "../components/DarkModeToggle";
+import { useSearchParams } from "react-router-dom";
 
 interface Repository {
     id: number;
@@ -31,7 +33,120 @@ export default function SearchPage(){
     const [sort, setSort] = useState('stars');
     const [order, setOrder] = useState('desc');
     const [language, setLanguage] = useState('');
-    const [starsRange, setStarsRange] = useState('');
+    const [minStars, setMinStars] = useState('');
+    const [maxStars, setMaxStars] = useState('');
+    const [searchParams, setSearchParams] = useSearchParams();
+
+    // Initialize state from URL params or localStorage on mount
+    useEffect(() => {
+        const urlQuery = searchParams.get('q');
+        const urlLang = searchParams.get('lang');
+        const urlSort = searchParams.get('sort');
+        const urlOrder = searchParams.get('order');
+        const urlMinStars = searchParams.get('minStars');
+        const urlMaxStars = searchParams.get('maxStars');
+        const urlPage = searchParams.get('page');
+
+        // If URL has params, use them (URL takes priority)
+        if (urlQuery || urlLang || urlSort || urlOrder || urlMinStars || urlMaxStars || urlPage) {
+            setQuery(urlQuery || 'react');
+            setLanguage(urlLang || '');
+            setSort(urlSort || 'stars');
+            setOrder(urlOrder || 'desc');
+            setMinStars(urlMinStars || '');
+            setMaxStars(urlMaxStars || '');
+            setPage(parseInt(urlPage || '1') || 1);
+        } else {
+            // Otherwise, try to load from localStorage
+            const savedState = localStorage.getItem('searchState');
+            if (savedState) {
+                try {
+                    const { query, language, sort, order, minStars, maxStars } = JSON.parse(savedState);
+                    const restoredQuery = query || 'react';
+                    const restoredLang = language || '';
+                    const restoredSort = sort || 'stars';
+                    const restoredOrder = order || 'desc';
+                    const restoredMinStars = minStars || '';
+                    const restoredMaxStars = maxStars || '';
+                    
+                    setQuery(restoredQuery);
+                    setLanguage(restoredLang);
+                    setSort(restoredSort);
+                    setOrder(restoredOrder);
+                    setMinStars(restoredMinStars);
+                    setMaxStars(restoredMaxStars);
+                    setPage(1);
+
+                    // Update URL with restored state
+                    const params: Record<string, string> = {
+                        q: restoredQuery,
+                        sort: restoredSort,
+                        order: restoredOrder,
+                        page: '1',
+                    };
+                    if (restoredLang) params.lang = restoredLang;
+                    if (restoredMinStars) params.minStars = restoredMinStars;
+                    if (restoredMaxStars) params.maxStars = restoredMaxStars;
+                    
+                    setSearchParams(params);
+                } catch (error) {
+                    console.error('Error parsing saved search state:', error);
+                    localStorage.removeItem('searchState');
+                    // Set defaults and update URL
+                    setQuery('react');
+                    setSearchParams({ q: 'react', sort: 'stars', order: 'desc', page: '1' });
+                }
+            } else {
+                // No saved state, set defaults and update URL
+                setQuery('react');
+                setSearchParams({ q: 'react', sort: 'stars', order: 'desc', page: '1' });
+            }
+        }
+    }, [searchParams, setSearchParams]);
+
+    // Sync state changes to URL (but avoid empty values to keep URL clean)
+    useEffect(() => {
+        const params: Record<string, string> = {
+            q: query,
+            sort,
+            order,
+            page: page.toString(),
+        };
+
+        // Only add optional params if they have values
+        if (language) params.lang = language;
+        if (minStars) params.minStars = minStars;
+        if (maxStars) params.maxStars = maxStars;
+
+        setSearchParams(params, { replace: true });
+
+        // Also save to localStorage for persistence across sessions
+        const stateToPersist = {
+            query,
+            language,
+            sort,
+            order,
+            minStars,
+            maxStars,
+        };
+        localStorage.setItem('searchState', JSON.stringify(stateToPersist));
+    }, [query, language, sort, order, minStars, maxStars, page, setSearchParams]);
+
+
+    // Helper function to build stars query string
+    const buildStarsQuery = (min: string, max: string): string => {
+        const minNum = min ? parseInt(min) : null;
+        const maxNum = max ? parseInt(max) : null;
+        
+        if (minNum && maxNum) {
+            return `stars:${minNum}..${maxNum}`;
+        } else if (minNum) {
+            return `stars:>${minNum}`;
+        } else if (maxNum) {
+            return `stars:<${maxNum}`;
+        }
+        return '';
+    };
 
     useEffect(() => {
         if (!query) return;
@@ -40,8 +155,10 @@ export default function SearchPage(){
         if (language) {
             queryString += `+language:${language}`;
         }
-        if (starsRange) {
-            queryString += `+stars:${starsRange}`;
+        
+        const starsQuery = buildStarsQuery(minStars, maxStars);
+        if (starsQuery) {
+            queryString += `+${starsQuery}`;
         }
         
         setLoading(true);
@@ -70,11 +187,11 @@ export default function SearchPage(){
             setError(error.message);
             setLoading(false);
         })
-    }, [query, page, sort, order, language, starsRange]);
+    }, [query, page, sort, order, language, minStars, maxStars]);
 
     useEffect(() => {
         setPage(1);
-    }, [query, sort, order, language, starsRange]);
+    }, [query, sort, order, language, minStars, maxStars]);
 
     return (
         <div className="min-vh-100 py-4">
@@ -103,26 +220,12 @@ export default function SearchPage(){
                                     
                                     <Filters language={language} setLanguage={setLanguage} />
 
-                                    {/* Stars Range Filter */}
-                                    <div className="col-lg-4 col-md-6 col-12 mb-3">
-                                        <label htmlFor="stars-filter" className="form-label fw-medium">
-                                            Filter by Stars
-                                        </label>
-                                        <select 
-                                            id="stars-filter"
-                                            value={starsRange} 
-                                            onChange={(e) => setStarsRange(e.target.value)}
-                                            className="form-select"
-                                            aria-label="Filter repositories by star count"
-                                        >
-                                            <option value="">All repositories</option>
-                                            <option value="0..500">0 - 500 stars</option>
-                                            <option value="500..1000">500 - 1,000 stars</option>
-                                            <option value="1000..5000">1,000 - 5,000 stars</option>
-                                            <option value="5000..10000">5,000 - 10,000 stars</option>
-                                            <option value=">10000">10,000+ stars</option>
-                                        </select>
-                                    </div>
+                                    <StarsFilter 
+                                        minStars={minStars}
+                                        maxStars={maxStars}
+                                        setMinStars={setMinStars}
+                                        setMaxStars={setMaxStars}
+                                    />
                                 </div>
                             </div>
                         </div>
