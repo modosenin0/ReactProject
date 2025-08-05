@@ -76,33 +76,42 @@ export default function SearchPage(){
     }, [query, sort, order, language, starsRange]);
 
     return (
-        <div className="min-h-screen bg-gray-50 py-4 sm:py-8">
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 py-6 sm:py-12">
             <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 sm:mb-8 text-center">
-                    Popular Repositories
+                <div className="text-center mb-8 sm:mb-12">
+                    <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-indigo-800 bg-clip-text text-transparent mb-3">
+                        Discover Repositories
+                    </h1>
+                    <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                        Explore the most popular open-source projects on GitHub
+                    </p>
+                </div>
                 </h1>
                 
                 <SearchBar onSearch={setQuery} />
 
                 {/* Controls Group */}
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6 mb-6 sm:mb-8">
-                    <h2 className="text-lg font-semibold text-gray-900 mb-4">Filter & Sort Options</h2>
+                <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-6 sm:p-8 mb-8 sm:mb-12">
+                    <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
+                        <span className="w-2 h-2 bg-blue-500 rounded-full mr-3"></span>
+                        Filter & Sort Options
+                    </h2>
                     
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                         <SortOptions sort={sort} setSort={setSort} order={order} setOrder={setOrder} />
                         
                         <Filters language={language} setLanguage={setLanguage} />
 
                         {/* Stars Range Filter */}
-                        <div className="space-y-2">
-                            <label htmlFor="stars-filter" className="block text-sm font-medium text-gray-700">
+                        <div className="space-y-3">
+                            <label htmlFor="stars-filter" className="block text-sm font-semibold text-gray-800">
                                 Filter by Stars
                             </label>
                             <select 
                                 id="stars-filter"
                                 value={starsRange} 
                                 onChange={(e) => setStarsRange(e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm transition-all duration-200"
+                                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-300 outline-none text-sm transition-all duration-200 bg-white/80 hover:bg-white"
                                 aria-label="Filter repositories by star count"
                             >
                                 <option value="">All repositories</option>
@@ -118,7 +127,7 @@ export default function SearchPage(){
 
                 {/* Debug pagination info */}
                 {totalCount > 0 && (
-                    <div className="mb-4 p-3 bg-blue-50 text-xs sm:text-sm text-blue-700 rounded-lg border border-blue-200">
+                    <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 text-sm text-blue-800 rounded-xl border border-blue-100 shadow-sm">
                         <div className="flex flex-wrap gap-2 sm:gap-4">
                             <span>Total: <strong>{totalCount.toLocaleString()}</strong> results</span>
                             <span>Page: <strong>{page}</strong></span>
@@ -129,52 +138,56 @@ export default function SearchPage(){
                 )}
                 
                 {loading ? (
-                    <div className="flex justify-center items-center py-16 sm:py-20">
+                    <div className="flex justify-center items-center py-20 sm:py-24">
                         <div className="text-center">
-                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                            <p className="text-lg text-gray-600">Loading repositories...</p>
+                            <div className="relative mx-auto mb-6">
+                                <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-100 border-t-blue-600 mx-auto"></div>
+                                <div className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-400 to-indigo-500 opacity-20 animate-pulse"></div>
+                            </div>
+                            <p className="text-xl font-medium text-gray-700">Loading repositories...</p>
+                            <p className="text-sm text-gray-500 mt-2">Discovering amazing projects</p>
                             {error && <p className="text-red-600 mt-2">{error}</p>}
                         </div>
                     </div>
                 ) : repos.length > 0 ? (
-                    <div className="space-y-4">
-                        <div className="grid gap-4 sm:gap-6">
+                    <div className="space-y-6">
+                        <div className="grid gap-6 sm:gap-8">
                             {repos.map((repo) => (
-                                <div key={repo.id} className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 p-4 sm:p-6 border border-gray-100 hover:border-gray-200">
-                                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-4">
-                                        <div className="flex-1 mb-3 sm:mb-0">
+                                <div key={repo.id} className="group bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg hover:shadow-xl transition-all duration-500 p-6 sm:p-8 border border-white/50 hover:border-blue-200 hover:bg-white/90 hover:-translate-y-1">
+                                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-6">
+                                        <div className="flex-1 mb-4 sm:mb-0">
                                             <a 
                                                 href={repo.html_url} 
                                                 target="_blank" 
                                                 rel="noopener noreferrer"
                                                 className="block group"
                                             >
-                                                <h2 className="text-lg sm:text-xl font-semibold text-gray-900 hover:text-blue-600 transition-colors duration-200 group-hover:underline">
+                                                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 hover:text-blue-600 transition-colors duration-300 group-hover:underline decoration-2 underline-offset-4">
                                                     {repo.name}
                                                 </h2>
                                             </a>
-                                            <p className="text-sm text-gray-500 mt-1">{repo.full_name}</p>
+                                            <p className="text-sm text-gray-500 mt-2 font-medium">{repo.full_name}</p>
                                         </div>
                                         
-                                        <div className="flex items-center space-x-3 sm:space-x-4 flex-wrap gap-2">
-                                            <div className="flex items-center bg-yellow-50 px-2 py-1 rounded-full border border-yellow-200">
-                                                <span className="text-yellow-500 text-xs mr-1">⭐</span>
-                                                <span className="text-xs font-medium text-gray-700">
+                                        <div className="flex items-center space-x-3 sm:space-x-4 flex-wrap gap-3">
+                                            <div className="flex items-center bg-gradient-to-r from-yellow-50 to-amber-50 px-3 py-2 rounded-full border border-yellow-200 shadow-sm">
+                                                <span className="text-yellow-500 text-sm mr-2">⭐</span>
+                                                <span className="text-sm font-semibold text-gray-800">
                                                     {repo.stargazers_count.toLocaleString()}
                                                 </span>
                                             </div>
                                             
-                                            <div className="flex items-center bg-blue-50 px-2 py-1 rounded-full border border-blue-200">
-                                                <span className="text-blue-500 text-xs mr-1">🍴</span>
-                                                <span className="text-xs font-medium text-gray-700">
+                                            <div className="flex items-center bg-gradient-to-r from-blue-50 to-cyan-50 px-3 py-2 rounded-full border border-blue-200 shadow-sm">
+                                                <span className="text-blue-500 text-sm mr-2">🍴</span>
+                                                <span className="text-sm font-semibold text-gray-800">
                                                     {repo.forks_count.toLocaleString()}
                                                 </span>
                                             </div>
                                             
                                             {repo.language && (
-                                                <div className="flex items-center bg-green-50 px-2 py-1 rounded-full border border-green-200">
-                                                    <span className="text-green-500 text-xs mr-1">🖥️</span>
-                                                    <span className="text-xs font-medium text-gray-700">
+                                                <div className="flex items-center bg-gradient-to-r from-green-50 to-emerald-50 px-3 py-2 rounded-full border border-green-200 shadow-sm">
+                                                    <span className="text-green-500 text-sm mr-2">🖥️</span>
+                                                    <span className="text-sm font-semibold text-gray-800">
                                                         {repo.language}
                                                     </span>
                                                 </div>
@@ -182,22 +195,22 @@ export default function SearchPage(){
                                         </div>
                                     </div>
                                     
-                                    <p className="text-gray-600 text-sm mb-4 leading-relaxed">
+                                    <p className="text-gray-700 text-base mb-6 leading-relaxed font-medium">
                                         {repo.description || "No description available"}
                                     </p>
                                     
                                     {repo.topics && repo.topics.length > 0 && (
-                                        <div className="flex flex-wrap gap-1 mb-4">
+                                        <div className="flex flex-wrap gap-2 mb-6">
                                             {repo.topics.slice(0, 5).map((topic, index) => (
                                                 <span 
                                                     key={index}
-                                                    className="inline-block bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded-md"
+                                                    className="inline-block bg-gradient-to-r from-gray-100 to-slate-100 text-gray-700 text-xs font-medium px-3 py-1.5 rounded-full border border-gray-200 hover:bg-gray-200 transition-colors"
                                                 >
                                                     {topic}
                                                 </span>
                                             ))}
                                             {repo.topics.length > 5 && (
-                                                <span className="text-xs text-gray-500">
+                                                <span className="text-xs text-gray-500 font-medium px-2 py-1">
                                                     +{repo.topics.length - 5} more
                                                 </span>
                                             )}
@@ -205,9 +218,9 @@ export default function SearchPage(){
                                     )}
                                     
                                     <div className="flex items-center justify-between flex-wrap gap-3">
-                                        <div className="flex items-center space-x-4 text-xs text-gray-500">
+                                        <div className="flex items-center space-x-4 text-sm text-gray-600">
                                             <span className="flex items-center">
-                                                <span className="mr-1">🕓</span>
+                                                <span className="mr-2 text-base">🕓</span>
                                                 Updated {new Date(repo.updated_at).toLocaleDateString()}
                                             </span>
                                         </div>
@@ -216,11 +229,11 @@ export default function SearchPage(){
                                             href={repo.html_url} 
                                             target="_blank" 
                                             rel="noopener noreferrer"
-                                            className="inline-flex items-center px-3 py-1.5 bg-gray-900 hover:bg-gray-800 text-white text-xs font-medium rounded-lg transition-colors duration-200 group"
+                                            className="inline-flex items-center px-5 py-2.5 bg-gradient-to-r from-gray-900 to-gray-800 hover:from-gray-800 hover:to-gray-700 text-white text-sm font-semibold rounded-xl transition-all duration-300 group shadow-lg hover:shadow-xl hover:scale-105"
                                             aria-label={`View ${repo.name} repository on GitHub`}
                                         >
                                             View Repository
-                                            <span className="ml-1.5 group-hover:translate-x-0.5 transition-transform">→</span>
+                                            <span className="ml-2 group-hover:translate-x-1 transition-transform duration-300">→</span>
                                         </a>
                                     </div>
                                 </div>
@@ -229,11 +242,11 @@ export default function SearchPage(){
                         <Pagination page={page} setPage={setPage} hasNextPage={hasNextPage} />
                     </div>
                 ) : (
-                    <div className="text-center py-12 sm:py-16">
+                    <div className="text-center py-16 sm:py-20">
                         <div className="text-gray-500">
-                            <div className="text-4xl sm:text-6xl mb-4">📁</div>
-                            <p className="text-lg sm:text-xl font-medium">No repositories found</p>
-                            <p className="text-sm sm:text-base mt-1">Try searching for a different term</p>
+                            <div className="text-6xl sm:text-8xl mb-6 opacity-60">📁</div>
+                            <p className="text-xl sm:text-2xl font-bold text-gray-700 mb-2">No repositories found</p>
+                            <p className="text-base sm:text-lg text-gray-500">Try searching for a different term or adjusting your filters</p>
                         </div>
                     </div>
                 )}

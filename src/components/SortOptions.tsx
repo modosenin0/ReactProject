@@ -10,16 +10,16 @@ interface SortProps {
 export default function SortOptions({ sort, setSort, order, setOrder }: SortProps){
 
     return (
-        <div className="space-y-2">
-            <label htmlFor="sort-select" className="block text-sm font-medium text-gray-700">
+        <div className="space-y-3">
+            <label htmlFor="sort-select" className="block text-sm font-semibold text-gray-800">
                 Sort By
             </label>
-            <div className="flex flex-col sm:flex-row gap-2">
+            <div className="flex flex-col sm:flex-row gap-3">
                 <select 
                     id="sort-select"
                     value={sort} 
                     onChange={(e) => setSort(e.target.value)} 
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm transition-all duration-200"
+                    className="flex-1 px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-300 outline-none text-sm transition-all duration-200 bg-white/80 hover:bg-white"
                     aria-label="Sort repositories by"
                 >
                     <option value="stars">Stars</option>
@@ -30,7 +30,7 @@ export default function SortOptions({ sort, setSort, order, setOrder }: SortProp
                 <select 
                     value={order} 
                     onChange={e => setOrder(e.target.value)}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm transition-all duration-200"
+                    className="flex-1 px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-300 outline-none text-sm transition-all duration-200 bg-white/80 hover:bg-white"
                     aria-label="Sort order"
                 >
                     <option value="desc">Descending</option>
