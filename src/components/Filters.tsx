@@ -8,15 +8,15 @@ interface FiltersProps {
 export default function Filters({ language, setLanguage }: FiltersProps){
 
     return (
-        <div className="space-y-2">
-            <label htmlFor="language-select" className="block text-sm font-medium text-gray-700">
+        <div className="col-lg-4 col-md-6 col-12 mb-3">
+            <label htmlFor="language-select" className="form-label fw-medium">
                 Programming Language
             </label>
             <select 
                 id="language-select"
                 value={language} 
                 onChange={(e) => setLanguage(e.target.value)} 
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm transition-all duration-200"
+                className="form-select"
                 aria-label="Filter repositories by programming language"
             >
                 <option value="">All Languages</option>

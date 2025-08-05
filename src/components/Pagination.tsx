@@ -9,34 +9,42 @@ interface PaginationProps {
 export default function Pagination({ page, setPage, hasNextPage }: PaginationProps){
 
     return (
-        <div className="flex items-center justify-center space-x-4 mt-8 py-4">
-            <button 
-                disabled={page === 1} 
-                onClick={() => setPage(page - 1)}
-                className="flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white transition-all duration-200"
-                aria-label="Go to previous page"
-            >
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-                Previous
-            </button>
-            
-            <span className="px-4 py-2 text-sm font-medium text-gray-700 bg-blue-50 border border-blue-200 rounded-lg">
-                Page {page}
-            </span>
-            
-            <button 
-                onClick={() => setPage(page + 1)} 
-                disabled={!hasNextPage}
-                className="flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white transition-all duration-200"
-                aria-label="Go to next page"
-            >
-                Next
-                <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-            </button>
-        </div>
+        <nav aria-label="Repository pagination" className="d-flex justify-content-center mt-4">
+            <ul className="pagination">
+                <li className={`page-item ${page === 1 ? 'disabled' : ''}`}>
+                    <button 
+                        className="page-link"
+                        onClick={() => setPage(page - 1)}
+                        disabled={page === 1}
+                        aria-label="Go to previous page"
+                    >
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" className="me-1">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                        </svg>
+                        Previous
+                    </button>
+                </li>
+                
+                <li className="page-item active">
+                    <span className="page-link">
+                        Page {page}
+                    </span>
+                </li>
+                
+                <li className={`page-item ${!hasNextPage ? 'disabled' : ''}`}>
+                    <button 
+                        className="page-link"
+                        onClick={() => setPage(page + 1)} 
+                        disabled={!hasNextPage}
+                        aria-label="Go to next page"
+                    >
+                        Next
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" className="ms-1">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                    </button>
+                </li>
+            </ul>
+        </nav>
     )
 }
