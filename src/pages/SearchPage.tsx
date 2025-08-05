@@ -86,7 +86,6 @@ export default function SearchPage(){
                         Explore the most popular open-source projects on GitHub
                     </p>
                 </div>
-                </h1>
                 
                 <SearchBar onSearch={setQuery} />
 
